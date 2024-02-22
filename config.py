@@ -1,7 +1,7 @@
 import os
 
 
-class Config:
+def Config:
     DEBUG = True
     TESTING = False
     CSRF_ENABLED = True
@@ -10,22 +10,22 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = True
 
 
-class ProductionConfig(Config):
+def ProductionConfig(Config):
     DEBUG = False
     TESTING = False
 
 
-class StagingConfig(Config):
+def StagingConfig(Config):
     DEVELOPMENT = True
     DEBUG = True
 
 
-class DevelopmentConfig(Config):
+def DevelopmentConfig(Config):
     DEVELOPMENT = True
     DEBUG = True
 
 
-class TestConfig(Config):
+def TestConfig(Config):
     DEBUG = True
     TESTING = True
     WTF_CSRF_ENABLED = False
