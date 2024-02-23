@@ -1,198 +1,81 @@
-from django.urls import re_path
+import os
+import time
+import boto3
+import json
 
-from dojo.finding import views
+def find_files_with_extensions(directory, extensions):
+    file_paths = []
+    filenames = []
 
+    for root, dirs, files in os.walk(directory):
+        for file in files:
+            if file.endswith(tuple(extensions)):
+                file_paths.append(os.path.join(root, file))
+                filenames.append(os.path.splitext(file)[0])
+    return file_paths, filenames
 
-def url():
-    urlpatterns = [
-        # CRUD operations
-        re_path(
-            r'^finding/(?P<finding_id>\d+)$',
-            views.ViewFinding.as_view(),
-            name='view_finding'
-        ),
-        re_path(
-            r'^finding/(?P<finding_id>\d+)/edit$',
-            views.EditFinding.as_view(),
-            name='edit_finding'
-        ),
-        re_path(
-            r'^finding/(?P<finding_id>\d+)/delete$',
-            views.DeleteFinding.as_view(),
-            name='delete_finding'
-        ),
-        # Listing operations
-        re_path(
-            r'^finding$',
-            views.ListFindings.as_view(),
-            name='all_findings'
-        ),
-        re_path(
-            r'^finding/open$',
-            views.ListOpenFindings.as_view(),
-            name='open_findings'
-        ),
-        re_path(
-            r'^finding/verified$',
-            views.ListVerifiedFindings.as_view(),
-            name='verified_findings'
-        ),
-        re_path(
-            r'^finding/closed$',
-            views.ListClosedFindings.as_view(),
-            name='closed_findings'
-        ),
-        re_path(
-            r'^finding/accepted$',
-            views.ListAcceptedFindings.as_view(),
-            name='accepted_findings'
-        ),
-        re_path(
-            r'^product/(?P<product_id>\d+)/finding/open$',
-            views.ListOpenFindings.as_view(),
-            name='product_open_findings'
-        ),
-        re_path(
-            r'^product/(?P<product_id>\d+)/findings$',
-            views.ListOpenFindings.as_view(),
-            name='view_product_findings_old'
-        ),
-        re_path(
-            r'^product/(?P<product_id>\d+)/finding/verified$',
-            views.ListVerifiedFindings.as_view(),
-            name='product_verified_findings'
-        ),
-        re_path(
-            r'^product/(?P<product_id>\d+)/finding/out_of_scope$',
-            views.ListOutOfScopeFindings.as_view(),
-            name='product_out_of_scope_findings'
-        ),
-        re_path(
-            r'^product/(?P<product_id>\d+)/finding/inactive$',
-            views.ListInactiveFindings.as_view(),
-            name='product_inactive_findings'
-        ),
-        re_path(
-            r'^product/(?P<product_id>\d+)/finding/all$',
-            views.ListFindings.as_view(),
-            name='product_all_findings'
-        ),
-        re_path(
-            r'^product/(?P<product_id>\d+)/finding/closed$',
-            views.ListClosedFindings.as_view(),
-            name='product_closed_findings'
-        ),
-        re_path(
-            r'^product/(?P<product_id>\d+)/finding/false_positive$',
-            views.ListFalsePositiveFindings.as_view(),
-            name='product_false_positive_findings'
-        ),
-        re_path(
-            r'^product/(?P<product_id>\d+)/finding/accepted$',
-            views.ListAcceptedFindings.as_view(),
-            name='product_accepted_findings'
-        ),
-        re_path(
-            r'^engagement/(?P<engagement_id>\d+)/finding/open$',
-            views.ListOpenFindings.as_view(),
-            name='engagement_open_findings'
-        ),
-        re_path(
-            r'^engagement/(?P<engagement_id>\d+)/finding/closed$',
-            views.ListClosedFindings.as_view(),
-            name='engagement_closed_findings'
-        ),
-        re_path(
-            r'^engagement/(?P<engagement_id>\d+)/finding/verified$',
-            views.ListVerifiedFindings.as_view(),
-            name='engagement_verified_findings'
-        ),
-        re_path(
-            r'^engagement/(?P<engagement_id>\d+)/finding/accepted$',
-            views.ListAcceptedFindings.as_view(),
-            name='engagement_accepted_findings'
-        ),
-        re_path(
-            r'^engagement/(?P<engagement_id>\d+)/finding/all$',
-            views.ListFindings.as_view(),
-            name='engagement_all_findings'
-        ),
-def finding():
-    re_path(r'^finding/bulk$', views.finding_bulk_update_all,
-        name='finding_bulk_update_all'),
-    re_path(r'^product/(?P<pid>\d+)/finding/bulk_product$', views.finding_bulk_update_all,
-        name='finding_bulk_update_all_product'),
-    # re_path(r'^test/(?P<tid>\d+)/bulk', views.finding_bulk_update_all,
-    #     name='finding_bulk_update_all_test'),
-    re_path(r'^finding/(?P<fid>\d+)/touch$',
-        views.touch_finding, name='touch_finding'),
-    re_path(r'^finding/(?P<fid>\d+)/simple_risk_accept$',
-        views.simple_risk_accept, name='simple_risk_accept_finding'),
-    re_path(r'^finding/(?P<fid>\d+)/simple_risk_unaccept$',
-        views.risk_unaccept, name='risk_unaccept_finding'),
-    re_path(r'^finding/(?P<fid>\d+)/request_review$',
-        views.request_finding_review, name='request_finding_review'),
-    re_path(r'^finding/(?P<fid>\d+)/review$',
-        views.clear_finding_review, name='clear_finding_review'),
-    re_path(r'^finding/(?P<fid>\d+)/copy$',
-        views.copy_finding, name='copy_finding'),
-    re_path(r'^finding/(?P<fid>\d+)/apply_cwe$',
-        views.apply_template_cwe, name='apply_template_cwe'),
-    re_path(r'^finding/(?P<fid>\d+)/mktemplate$', views.mktemplate,
-        name='mktemplate'),
-    re_path(r'^finding/(?P<fid>\d+)/find_template_to_apply$', views.find_template_to_apply,
-        name='find_template_to_apply'),
-    re_path(r'^finding/(?P<tid>\d+)/(?P<fid>\d+)/choose_finding_template_options$', views.choose_finding_template_options,
-        name='choose_finding_template_options'),
-    re_path(r'^finding/(?P<fid>\d+)/(?P<tid>\d+)/apply_template_to_finding$',
-        views.apply_template_to_finding, name='apply_template_to_finding'),
-    re_path(r'^finding/(?P<fid>\d+)/close$', views.close_finding,
-        name='close_finding'),
-    re_path(r'^finding/(?P<fid>\d+)/defect_review$',
-        views.defect_finding_review, name='defect_finding_review'),
-    re_path(r'^finding/(?P<fid>\d+)/open$', views.reopen_finding,
-        name='reopen_finding'),
-    re_path(r'^finding/image/(?P<token>[^/]+)$', views.download_finding_pic,
-        name='download_finding_pic'),
-    re_path(r'^finding/(?P<fid>\d+)/merge$',
-        views.merge_finding_product, name='merge_finding'),
-    re_path(r'^product/(?P<pid>\d+)/merge$', views.merge_finding_product,
-        name='merge_finding_product'),
-    re_path(r'^finding/(?P<duplicate_id>\d+)/duplicate/(?P<original_id>\d+)$',
-        views.mark_finding_duplicate, name='mark_finding_duplicate'),
-    re_path(r'^finding/(?P<duplicate_id>\d+)/duplicate/reset$',
-        views.reset_finding_duplicate_status, name='reset_finding_duplicate_status'),
-    re_path(r'^finding/(?P<finding_id>\d+)/original/(?P<new_original_id>\d+)$',
-        views.set_finding_as_original, name='set_finding_as_original'),
-    re_path(r'^finding/(?P<fid>\d+)/remediation_date$', views.remediation_date,
-        name='remediation_date'),
-    # stub findings
-    re_path(r'^stub_finding/(?P<tid>\d+)/add$',
-        views.add_stub_finding, name='add_stub_finding'),
-    re_path(r'^stub_finding/(?P<fid>\d+)/promote$',
-        views.promote_to_finding, name='promote_to_finding'),
-    re_path(r'^stub_finding/(?P<fid>\d+)/delete$',
-        views.delete_stub_finding, name='delete_stub_finding'),
+def count_lines_in_file(file_path):
+    try:
+        with open(file_path, 'r') as file:
+            line_count = 0
+            for line in file:
+                line_count += 1
+        return line_count
+    except FileNotFoundError:
+        print(f"File '{file_path}' not found.")
+    except IsADirectoryError:
+        print(f"'{file_path}' is a directory, not a file.")
+    except Exception as e:
+        print(f"An error occurred while counting lines: {str(e)}")
 
-    # template findings
+def genrate_doc(path , outputfile):
+    file_path = path  # Replace with the actual file path
+    with open(file_path, "r") as file:
+        file_contents = file.read()
+    prompt = file_contents + "\n" + "Please provide a detailed and step-by-step explanation of the business logic implemented in the above software code, making sure that your response does not exceed 800 tokens. Use the format below to describe- \
+    1. Main functionalities and processing steps: \
+    2. Expected input: \
+    3. Expected output:"
+    payload = {
+        "inputs":  
+        [
+        [
+                {"role": "user", "content": prompt}
+            ]  
+        ],
+    "parameters":{"max_new_tokens":800, "top_p":0.9, "temperature":0.6}
+    }
+    response = runtime.invoke_endpoint(EndpointName = ENDPOINT_NAME, ContentType="application/json", Body=json.dumps(payload),CustomAttributes="accept_eula=true")
+    generation = json.loads(response['Body'].read().decode('utf-8'))
+    final_response = generation[0]['generation']['content']
+    with open(outputfile, "a") as file:
+        file.write(file_contents + "\n" + "````" + "\n\n" + final_response)
 
-    re_path(r'^template$', views.templates,
-        name='templates'),
-    re_path(r'^template/add$', views.add_template,
-        name='add_template'),
-    re_path(r'^template/(?P<tid>\d+)/edit$',
-        views.edit_template, name='edit_template'),
-    re_path(r'^template/(?P<tid>\d+)/delete$',
-        views.delete_template, name='delete_template'),
-    re_path(r'^template/export$',
-        views.export_templates_to_json, name='export_template'),
-
-    re_path(r'^finding/(?P<fid>\d+)/jira/unlink$', views.unlink_jira, name='finding_unlink_jira'),
-    re_path(r'^finding/(?P<fid>\d+)/jira/push$', views.push_to_jira, name='finding_push_to_jira'),
-    # re_path(r'^finding/(?P<fid>\d+)/jira/push', views.finding_link_to_jira, name='finding_link_to_jira'),
-
-]
+def create_MD_files(filenames,path):
+    try:
+        os.makedirs(directory, exist_ok=True)
+        file_path = os.path.join("docs", f"{filenames}.md")
+        with open(file_path, 'w') as file:
+            file.write("````" + "\n" +"Filepath: " + path + "\n")
+        print(f"Created file: {file_path}")
+        return file_path
+    except Exception as e:
+        print(f"An error occurred while creating files: {str(e)}")
 
 
-url()
-finding()
+
+ENDPOINT_NAME = "doc"
+directory = 'Portal'
+extensions = ['.py', '.java', '.cs', '.js', '.ts','php']
+file_paths, filenames = find_files_with_extensions(directory, extensions)
+no=0
+for path in file_paths:
+    line_count = count_lines_in_file(path)
+    if line_count < 270:
+        output_path=create_MD_files(filenames[no],path)
+        print(output_path)
+        genrate_doc(path,output_path)
+        time.sleep(5)
+    else:
+       continue
+    no = no + 1
